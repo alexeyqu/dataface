@@ -4,7 +4,7 @@ import os
 
 base_dir = os.path.dirname(os.path.realpath(__file__))
 
-recognizer = FacialRecognizer('db.sqlite')
+recognizer = FacialRecognizer('embeddings.db')
 
 image = recognizer._get_image(os.path.join(base_dir, 'test_img', 'selfie.jpg'))
 faces = recognizer.recognize_faces(image)
@@ -36,3 +36,6 @@ print(faces)
 assert len(faces) == 2
 for face in faces:
     assert face.name != 'Po'
+
+del recognizer
+
