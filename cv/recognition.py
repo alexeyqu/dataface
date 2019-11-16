@@ -6,6 +6,7 @@ Toolset works on single images (no video streams).
 import face_recognition
 import keras_facenet
 import numpy as np
+from scipy.spatial import cKDTree
 import PIL
 
 import logging
@@ -27,9 +28,13 @@ class FaceObject:
         self.left = l
         self.name = name
 
+    def __repr__(self):
+        return f'[{self.top}: {self.bottom}, {self.left}: {self.right}], name is {self.name}'
+
 
 class FacialRecognizer:
-    MAX_SIMILAR_DISTANCE = .5  # magic number to be adjusted
+    MAX_SIMILAR_DISTANCE = .7  # magic number to be adjusted
+    EMBEDDING_SIZE = 512
 
     def __init__(self, db_name):
         """
@@ -51,7 +56,7 @@ class FacialRecognizer:
         face_objects = []
         for t, r, b, l in self._extract_face_coordinates(image):
             embedding = self._get_embedding(image[t:b, l:r])
-            distance, closest_name = self._get_closest_name(embedding)
+            distance, closest_name = self._get_closest_face(embedding)
             face_objects.append(
                 FaceObject(
                     t, r, b, l,
@@ -65,16 +70,23 @@ class FacialRecognizer:
         :np.array image: cropped face-containing region
         :str name: non-empty string, may appear more than once
         :returns:
+        Note: must rebuild a kdtree here!
         """
         assert len(name) > 0
-        # TODO
+        self.names.append(name)
+        self.embeddings = np.vstack((self.embeddings, self._get_embedding(image)))
+        self.kdtree = cKDTree(self.embeddings)
 
-    def _get_closest_name(self, embedding):
+    def _get_closest_face(self, embedding):
         """
-        :np.array embedding: (128,) array
-        :returns: (float distance, str name)
+        :np.array embedding: (EMBEDDING_SIZE,) array
+        :returns: (float distance, str name), distance may be infinite if no candidates
         """
-        # TODO
+        if len(self.embeddings) == 0:
+            return float('inf'), None
+        distance, closest_index = self.kdtree.query(embedding, k=1)
+        log.info(f'{distance}, {closest_index}')
+        return distance[0], self.names[closest_index[0]]
 
     def _get_image(self, image_path, mode='RGB'):
         """
@@ -94,8 +106,15 @@ class FacialRecognizer:
         return face_recognition.face_locations(image)
 
     def _load_db(self):
+        """
+        Loads database into a matrix of (N, 128) embeddings and aligned names list.
+        Builds a cKDTree for a faster search.
+        """
         log.info(f'Loading embeddings to memory from {self.db_name}...')
         # TODO
+        self.embeddings = np.empty((0, self.EMBEDDING_SIZE), dtype='f')
+        self.names = []
+        self.kdtree = cKDTree(self.embeddings)
 
     def _dump_to_db(self):
         log.info(f'Unloading embeddings to database {self.db_name}...')
