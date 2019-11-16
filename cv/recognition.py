@@ -7,14 +7,17 @@ import face_recognition
 import keras_facenet
 import numpy as np
 from scipy.spatial import cKDTree
+import sqlite3
 import PIL
 
 import logging
+import os
 
 logging.basicConfig()
 log = logging.getLogger()
 log.setLevel('INFO')
 
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 class FaceObject:
     """
@@ -47,6 +50,7 @@ class FacialRecognizer:
     def __del__(self):
         log.info('Deleting the recognizer instance')
         self._dump_to_db()
+        self.connection.close()
     
     def recognize_faces(self, image):
         """
@@ -111,14 +115,27 @@ class FacialRecognizer:
         Builds a cKDTree for a faster search.
         """
         log.info(f'Loading embeddings to memory from {self.db_name}...')
-        # TODO
-        self.embeddings = np.empty((0, self.EMBEDDING_SIZE), dtype='f')
+        self.connection = sqlite3.connect(os.path.join(BASE_DIR, self.db_name))
+        c = self.connection.cursor()
+        self._create_db(c)
         self.names = []
+        self.embeddings = np.empty((0, self.EMBEDDING_SIZE), dtype='f')
+        for name, embedding_serialized in c.execute('''SELECT name, embedding_serialized FROM embeddings'''):
+            self.names.append(name);
+            embedding = np.array(eval(embedding_serialized), dtype='f')
+            self.embeddings = np.vstack((self.embeddings, embedding))
+        log.info(f'{len(self.embeddings)} entries of length {self.embeddings.shape[1]} found in db')
         self.kdtree = cKDTree(self.embeddings)
 
     def _dump_to_db(self):
         log.info(f'Unloading embeddings to database {self.db_name}...')
-        # TODO
+        c = self.connection.cursor()
+        c.execute('''DROP TABLE IF EXISTS embeddings''')
+        self._create_db(c)
+        serialized_embeddings = [str(list(emb)) for emb in self.embeddings]
+        log.info(f'Have to dump {len(self.embeddings)} entries')
+        c.executemany('''INSERT INTO embeddings VALUES (?, ?)''', zip(self.names, serialized_embeddings))
+        self.connection.commit()
     
     def _get_embedding(self, image):
         """
@@ -126,4 +143,11 @@ class FacialRecognizer:
         :returns: np.array of facial embedding
         """
         return self.embedder.embeddings([image])
+
+    def _create_db(self, cursor):
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS embeddings (
+                name text NOT NULL,
+                embedding_serialized text NOT NULL
+            )''') 
 
