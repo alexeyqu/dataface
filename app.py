@@ -25,7 +25,7 @@ clicked = False
 mouseX, mouseY = None, None
 
 root = tkinter.Tk()
-root.withdraw()
+# root.withdraw()
 
 def add_new_person(img):
     name = simpledialog.askstring('Who is this?', 'Enter the name')
