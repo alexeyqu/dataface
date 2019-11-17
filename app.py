@@ -18,7 +18,7 @@ import tkinter
 from tkinter import simpledialog
 
 
-video_stream_path = 0#'http://192.168.1.109:4747/video'
+video_stream_path = 'http://192.168.1.109:4747/video'
 recognizer = FacialRecognizer('db.sqlite')
 clicked = False
 mouseX, mouseY = None, None
