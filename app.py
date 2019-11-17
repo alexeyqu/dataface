@@ -74,7 +74,11 @@ class FaceApp:
                     clicked = False
                     for face in faces:
                         if face.top < mouseY * 0.25 < face.bottom and face.left < mouseX * 0.25 < face.right and face.name is None:
-                            add_new_person(Image.fromarray(imagearr).crop((face.left * 4, face.top * 4, face.right * 4, face.bottom * 4)))
+                            print(face)
+                            cropped = Image.fromarray(imagearr).crop((face.left, face.top, face.right, face.bottom))
+                            cropped.save('test.jpg')
+                            w, h = cropped.size
+                            add_new_person(cropped.resize((w // 4, h // 4)))
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     break

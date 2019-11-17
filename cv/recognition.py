@@ -3,8 +3,8 @@ Tools for facial recognition and classification.
 Toolset works on single images (no video streams).
 """
 
-import face_recognition
 import keras_facenet
+import face_recognition
 import numpy as np
 from scipy.spatial import cKDTree
 import sqlite3
@@ -36,7 +36,7 @@ class FaceObject:
 
 
 class FacialRecognizer:
-    MAX_SIMILAR_DISTANCE = .7  # magic number to be adjusted
+    MAX_SIMILAR_DISTANCE = 1.35  # magic number to be adjusted
     EMBEDDING_SIZE = 512
 
     def __init__(self, db_name):
