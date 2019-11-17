@@ -20,22 +20,20 @@ from tkinter import simpledialog
 
 video_stream_path = 'http://192.168.1.109:4747/video'
 recognizer = FacialRecognizer('db.sqlite')
+
 clicked = False
 mouseX, mouseY = None, None
 
 root = tkinter.Tk()
 root.withdraw()
 
-
 def add_new_person(img):
     name = simpledialog.askstring('Who is this?', 'Enter the name')
     recognizer.assign_name_to_image(np.asarray(img), name)
-    
-
 
 def clck_handler(event, x, y, flags, param):
     global mouseX, mouseY, clicked
-    if event == cv2.EVENT_LBUTTONDBLCLK:
+    if event == cv2.EVENT_LBUTTONDOWN:
         mouseX, mouseY, clicked = x, y, True
         print(mouseX, mouseY, clicked)
 
