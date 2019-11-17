@@ -47,7 +47,7 @@ class FaceApp:
         self.vs = vs
 
     def run(self):
-        global clicked, mouseX, mouseY
+        global clicked, mouseX, mouseY, recognizer
         process_ratio = 5
         process = 0
         faces = []
