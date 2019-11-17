@@ -81,6 +81,7 @@ class FaceApp:
                             add_new_person(cropped.resize((w // 4, h // 4)))
 
                 if cv2.waitKey(1) & 0xFF == ord('q'):
+                    del recognizer
                     break
                     
         except BaseException as e:
